@@ -13,7 +13,12 @@ public class Problem_missNum {
 				swap(arr, l, arr[l] - 1);
 			}
 		}
-		return l + 1;
+	}
+
+	public static void swap(int[] arr, int i, int j) {
+		int temp = arr[i];
+		arr[i] = arr[j];
+		arr[j] = temp;
 	}
 
 }
