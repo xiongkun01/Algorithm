@@ -1,0 +1,271 @@
+Linux常考命令
+三、文本处理
+3.1、find
+**********当前目录下搜索出权限为777的文件
+find . -type f -perm 777
+**********删除当前目录下所有.txt文件
+find . -type f -name "*.txt" -delete
+*********找出当前目录下所有root的文件，并把所有权更改为用户tom，{}用于与-exec选项结合
+使用来匹配所有文件，然后会被替换为相应的文件名。-exec 和 \; 为一组指令，必须要成对出现，\ 是将分号转义，
+因为在linux下分号有特殊的意思。
+find . -type f -user root -exec chown tom {} \; 
+*********找出自己家目录下所有的.txt文件并删除，-ok和-exec行为一样，不过它会给出提示，是否执行相应的操作。
+find $HOME/. -name "*.txt" -ok rm {} \;
+find . -name "*.pdf" -ok rm {} \;
+*********查找当前目录下所有.txt文件并把他们拼接起来写入到all.txt文件中。
+find . -type f -name "*.txt" -exec cat {} \;> all.txt
+*********将30天前的.log文件移动到old目录中。
+find . -type f -mtime +30 -name "*.log" -exec cp {} old \;
+********找出当前目录下所有.txt文件并以“File:文件名”的形式打印出来
+find . -type f -name "*.txt" -exec printf "File: %s\n" {} \;
+********因为单行命令中-exec参数中无法使用多个命令，以下方法可以实现在-exec之后接受多条命令
+-exec ./text.sh {} \;
+********查找当前目录或者子目录下所有.txt文件，但是跳过子目录sk
+find . -path "./sk" -prune -o -name "*.txt" -print
+********要列出所有长度为零的文件
+find . -empty
+
+3.2、cat命令连接文件并打印到标准输出设备上，cat经常用来显示文件的内容
+cat m1 （在屏幕上显示文件ml的内容）
+cat m1 m2 （同时显示文件ml和m2的内容）
+cat m1 m2 > file (将文件ml和m2合并后放入文件file中)
+
+3.3、grep 文本搜索
+********常用参数*******
+-o 只输出匹配的文本行 VS -v 只输出没有匹配的文本行
+-c 统计文件中包含文本的次数
+grep -c “text” filename
+-n 打印匹配的行号
+-i 搜索时忽略大小写
+-l 只打印文件名
+
+***********在多级目录中对文本递归搜索(程序员搜代码的最爱）:
+[root@izbp1elesj5g0nltpcc48az test]# grep "asd" . -R -n
+./b.txt:1:dsfasdfasfa
+./b.txt:2:asdgdsaa 
+./b.txt:3:sadf asdgads
+./b.txt:4:asdgasdg
+./c.txt:1:sdfasdgas safasfadsf
+./c.txt:2:asdgagasdgasdga
+./c.txt:3:asdfasgass
+./d.txt:1:dsfasdfasfa
+./d.txt:2:asdgdsaa 
+./d.txt:3:sadf asdgads
+./d.txt:4:asdgasdg
+./d.txt:6:sdfasdgas safasfadsf
+./d.txt:7:asdgagasdgasdga
+./d.txt:8:asdfasgass
+
+3.4. sort 排序
+字段说明
+
+-n 按数字进行排序 VS -d 按字典序进行排序
+-r 逆序排序
+-k N 指定按第N列排序
+示例:
+
+sort -nrk 1 data.txt
+sort -bd data // 忽略像空格之类的前导空白字符
+
+3.5. uniq 消除重复行
+消除重复行
+sort unsort.txt | uniq
+统计各行在文件中出现的次数
+sort unsort.txt | uniq -c
+找出重复行
+sort unsort.txt | uniq -d
+可指定每行中需要比较的重复内容：-s 开始位置 -w 比较字符数
+
+3.9. wc 统计行和字符的工具
+$wc -l file // 统计行数
+
+$wc -w file // 统计单词数
+
+$wc -c file // 统计字符数
+
+3.11. awk 数据流处理工具
+awk脚本结构
+awk ' BEGIN{ statements } statements2 END{ statements } '
+工作方式
+1.执行begin中语句块；
+
+2.从文件或stdin中读入一行，然后执行statements2，重复这个过程，直到文件全部被读取完毕；
+
+3.执行end语句块；
+
+
+
+四、磁盘管理
+4.1、查看磁盘空间
+查看磁盘空间利用大小:
+
+df -h
+-h: human缩写，以易读的方式显示结果（即带单位：比如M/G，如果不加这个参数，显示的数字以B为单位）
+
+$df -h
+/opt/app/todeav/config#df -h
+Filesystem            Size  Used Avail Use% Mounted on
+/dev/mapper/VolGroup00-LogVol00
+2.0G  711M  1.2G  38% /
+/dev/mapper/vg1-lv2    20G  3.8G   15G  21% /opt/applog
+/dev/mapper/vg1-lv1    20G   13G  5.6G  70% /opt/app
+
+查看当前目录所占空间大小:
+
+du -sh
+-h 人性化显示
+-s 递归整个目录的大小
+$du -sh
+653M
+查看当前目录下所有子文件夹排序后的大小:
+
+for i in `ls`; do du -sh $i; done | sort
+或者：
+du -sh `ls` | sort
+
+4.2、打包/压缩
+
+4.3、解包/解压缩
+
+
+五、进程管理工具
+*****使用进程管理工具，我们可以查询程序当前的运行状态，或终止一个进程；
+任何进程都与文件关联；我们会用到lsof工具（list opened files），作用是
+列举系统中已经被打开的文件。在linux环境中，任何事物都是文件，设备是文件，
+目录是文件，甚至sockets也是文件。用好lsof命令，对日常的linux管理非常有帮助。
+5.1. 查询进程
+查询正在运行的进程信息
+
+$ps -ef
+eg:查询归属于用户colin115的进程
+
+$ps -ef | grep colin115
+$ps -lu colin115
+查询进程ID（适合只记得部分进程字段）
+
+$pgrep 查找进程
+
+eg:查询进程名中含有re的进程
+[/home/weber#]pgrep -l re
+2 kthreadd
+28 ecryptfs-kthrea
+29515 redis-server
+以完整的格式显示所有的进程
+
+$ps -ajx
+显示进程信息，并实时更新
+
+$top
+查看端口占用的进程状态：
+
+lsof -i:3306
+查看用户username的进程所打开的文件
+
+$lsof -u username
+查询init进程当前打开的文件
+
+$lsof -c init
+查询指定的进程ID(23295)打开的文件：
+
+$lsof -p 23295
+查询指定目录下被进程开启的文件（使用+D 递归目录）：
+
+$lsof +d mydir1/
+5.2. 终止进程
+杀死指定PID的进程 (PID为Process ID)
+
+$kill PID
+杀死相关进程
+
+kill -9 3434
+杀死job工作 (job为job number)
+
+$kill %job
+5.3. 进程监控
+查看系统中使用CPU、使用内存最多的进程；
+
+$top
+(->)P
+输入top命令后，进入到交互界面；接着输入字符命令后显示相应的进程状态：
+
+对于进程，平时我们最常想知道的就是哪些进程占用CPU最多，占用内存最多。以下两个命令就可以满足要求:
+
+P：根据CPU使用百分比大小进行排序。
+M：根据驻留内存大小进行排序。
+i：使top不显示任何闲置或者僵死进程。
+这里介绍最使用的几个选项,对于更详细的使用，详见 top linux下的任务管理器 ;
+
+5.4. 分析线程栈
+使用命令pmap，来输出进程内存的状况，可以用来分析线程堆栈；
+
+$pmap PID
+
+eg:
+[/home/weber#]ps -fe| grep redis
+weber    13508 13070  0 08:14 pts/0    00:00:00 grep --color=auto redis
+weber    29515     1  0  2013 ?        02:55:59 ./redis-server redis.conf
+[/home/weber#]pmap 29515
+29515:   ./redis-server redis.conf
+08048000    768K r-x--  /home/weber/soft/redis-2.6.16/src/redis-server
+08108000      4K r----  /home/weber/soft/redis-2.6.16/src/redis-server
+08109000     12K rw---  /home/weber/soft/redis-2.6.16/src/redis-server
+5.5. 综合运用
+将用户colin115下的所有进程名以av_开头的进程终止:
+
+ps -u colin115 |  awk '/av_/ {print "kill -9 " $1}' | sh
+将用户colin115下所有进程名中包含HOST的进程终止:
+
+ps -fe| grep colin115|grep HOST |awk '{print $2}' | xargs kill -9;
+
+
+
+六、性能监控
+6.1、监控CPU
+***********查看CPU使用率
+[/home/weber#]sar -u 1 2
+Linux 2.6.35-22-generic-pae (MyVPS)     06/28/2014      _i686_  (1 CPU)
+
+09:03:59 AM     CPU     %user     %nice   %system   %iowait    %steal     %idle
+09:04:00 AM     all      0.00      0.00      0.50      0.00      0.00     99.50
+09:04:01 AM     all      0.00      0.00      0.00      0.00      0.00    100.00
+*********后面的两个参数表示监控的频率，比如例子中的1和2，表示每秒采样一次，总共采样2次；
+********查看CPU平均负载
+sar -q 1 2
+************sar指定-q后，就能查看运行队列中的进程数、系统上的进程大小、平均负载等；
+
+6.2、查询内存
+*********查看内存使用状况 sar指定-r之后，可查看内存使用状况;
+sar -r 1 2
+09:08:48 AM kbmemfree kbmemused  %memused kbbuffers  kbcached  kbcommit   %commit  kbactive   kbinact
+09:08:49 AM     17888    359784     95.26     37796     73272    507004     65.42    137400    150764
+09:08:50 AM     17888    359784     95.26     37796     73272    507004     65.42    137400    150764
+Average:        17888    359784     95.26     37796     73272    507004     65.42    137400    150764
+************查看内存使用量；
+free -m
+              total        used        free      shared  buff/cache   available
+Mem:           3790         858         209          32        2722        2597
+Swap:             0           0           0
+
+6.3、查询页面交换 
+查看页面交换发生状况 页面发生交换时，服务器的吞吐量会大幅下降；服务器状况不良时，
+如果怀疑因为内存不足而导致了页面交换的发生，可以使用sar -W这个命令来确认是否发生了大量的交换；
+sar -w 1 3
+
+6.4. 查询硬盘使用
+查看磁盘空间利用情况
+
+$df -h
+查询当前目录下空间使用情况，使用-h选项以KB以上的单位来显示，可读性高；
+[root@LinServ-1 ~]# df -h
+文件系统              容量  已用 可用 已用% 挂载点
+/dev/sda2             140G   27G  106G  21% /
+/dev/sda1             996M   61M  884M   7% /boot
+tmpfs                1009M     0 1009M   0% /dev/shm
+/dev/sdb1             2.7T  209G  2.4T   8% /data1
+
+du -sh  -h是人性化显示 s是递归整个目录的大小
+查看该目录下所有文件夹的排序后的大小
+
+for i in `ls`; do du -sh $i; done | sort
+或者
+du -sh `ls`
